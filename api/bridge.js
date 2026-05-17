@@ -57,11 +57,13 @@ export default function handler(req, res) {
     .seller span { color: #22c55e; font-weight: 600; }
     .redirect-msg { font-size: 13px; color: #64748b; margin-bottom: 20px; }
     .btn {
-      display: inline-block; background: #f97316; color: #fff;
-      font-size: 18px; font-weight: 700; padding: 16px 36px;
+      display: inline-block; color: #fff;
+      font-size: 16px; font-weight: 700; padding: 14px 36px;
       border-radius: 8px; text-decoration: none;
-      width: 100%; max-width: 360px;
+      width: 100%; max-width: 360px; margin-bottom: 10px;
     }
+    .btn-app { background: #f97316; }
+    .btn-web { background: #1e293b; border: 1px solid #475569; }
     .warning { font-size: 11px; color: #475569; margin-top: 16px; }
   </style>
 </head>
@@ -73,7 +75,12 @@ export default function handler(req, res) {
   <div class="price">${escHtml(price)}</div>
   <div class="seller">販売元：<span>Amazon.co.jp（正規）</span></div>
   <div class="redirect-msg">Amazonへ移動しています...</div>
-  <a class="btn" href="${amazonUrl}" id="buyBtn">今すぐAmazonで購入 →</a>
+  <a class="btn btn-app" href="${amazonUrl}" id="appBtn">
+    📱 Amazonアプリで開く
+  </a>
+  <a class="btn btn-web" href="${amazonUrl}" id="webBtn">
+    🌐 ブラウザで開く
+  </a>
   <div class="warning">
     ※ 在庫は予告なく終了する場合があります。<br>
     ※ このページはアフィリエイトリンクを含みます。
@@ -87,31 +94,30 @@ export default function handler(req, res) {
   var isIOS      = /iphone|ipad|ipod/.test(ua);
   var isAndroid  = /android/.test(ua);
 
-  function openApp() {
+  // アプリで開くボタン
+  document.getElementById('appBtn').addEventListener('click', function(e) {
+    e.preventDefault();
     if (isIOS) {
-      // iOSはUniversal Links経由が最も確実
-      // amazon.co.jpのUniversal Linksはそのままアプリで開く
-      var start = Date.now();
-      window.location.href = iosUrl;
-      // フォールバック：アプリが開かなかった場合にウェブへ
-      setTimeout(function() {
-        if (Date.now() - start < 2000) {
-          window.location.href = webUrl;
-        }
-      }, 1500);
+      // safari-https:// でSafariを経由してUniversal Links → Amazonアプリ
+      window.location.href = "safari-https://www.amazon.co.jp/dp/${asin}?tag=${tag}";
+      setTimeout(function() { window.location.href = webUrl; }, 1000);
     } else if (isAndroid) {
-      window.location.href = androidUrl;
-      setTimeout(function() { window.location.href = webUrl; }, 1500);
+      // Intent形式でAmazonアプリへ
+      window.location.href = "intent://" + webUrl.replace("https://", "") + "#Intent;scheme=https;package=com.amazon.mShop.android.shopping;S.browser_fallback_url=" + encodeURIComponent(webUrl) + ";end";
     } else {
       window.location.href = webUrl;
     }
-  }
+  });
 
-  setTimeout(openApp, 500);
-
-  document.getElementById('buyBtn').addEventListener('click', function(e) {
+  // ブラウザで開くボタン
+  document.getElementById('webBtn').addEventListener('click', function(e) {
     e.preventDefault();
-    openApp();
+    if (isIOS) {
+      // safari-https:// でSafariで開く
+      window.location.href = "safari-https://www.amazon.co.jp/dp/${asin}?tag=${tag}";
+    } else {
+      window.location.href = webUrl;
+    }
   });
 </script>
 </body>
