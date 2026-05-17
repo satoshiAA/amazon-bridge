@@ -61,7 +61,9 @@ export default function handler(req, res) {
     }
     .btn-app { background: #f97316; }
     .btn-web { background: #1e293b; border: 1px solid #475569; }
+    .btn-web { background: #1e293b; border: 1px solid #475569; }
     .warning { font-size: 11px; color: #475569; margin-top: 16px; }
+    .safari-hint { background: #1e293b; border: 1px solid #f97316; border-radius: 8px; padding: 14px; margin-top: 12px; font-size: 14px; color: #f97316; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -72,7 +74,8 @@ export default function handler(req, res) {
   <div class="price">${escHtml(price)}</div>
   <div class="seller">販売元：<span>Amazon.co.jp（正規）</span></div>
   <div class="redirect-msg">Amazonへ移動しています...</div>
-  <a class="btn btn-app" href="${amazonUrl}" id="appBtn">
+  <!-- amzn://スキームでAmazonアプリを直接起動 -->
+  <a class="btn btn-app" href="amzn://dp/${asin}?tag=${tag}" id="appBtn">
     📱 Amazonアプリで開く
   </a>
   <a class="btn btn-web" href="${amazonUrl}" id="webBtn">
@@ -91,30 +94,20 @@ export default function handler(req, res) {
   var isIOS      = /iphone|ipad|ipod/.test(ua);
   var isAndroid  = /android/.test(ua);
 
-  // アプリで開くボタン
+  // アプリボタン：amzn://スキームで直接起動
+  // アプリがなければwebUrlにフォールバック
   document.getElementById('appBtn').addEventListener('click', function(e) {
     e.preventDefault();
-    if (isIOS) {
-      // safari-https:// でSafariを経由してUniversal Links → Amazonアプリ
-      window.location.href = "safari-https://www.amazon.co.jp/dp/${asin}?tag=${tag}";
-      setTimeout(function() { window.location.href = webUrl; }, 1000);
-    } else if (isAndroid) {
-      // Intent形式でAmazonアプリへ
-      window.location.href = "intent://" + webUrl.replace("https://", "") + "#Intent;scheme=https;package=com.amazon.mShop.android.shopping;S.browser_fallback_url=" + encodeURIComponent(webUrl) + ";end";
-    } else {
+    window.location.href = "amzn://dp/${asin}?tag=${tag}";
+    setTimeout(function() {
       window.location.href = webUrl;
-    }
+    }, 1500);
   });
 
-  // ブラウザで開くボタン
+  // ブラウザボタン
   document.getElementById('webBtn').addEventListener('click', function(e) {
     e.preventDefault();
-    if (isIOS) {
-      // safari-https:// でSafariで開く
-      window.location.href = "safari-https://www.amazon.co.jp/dp/${asin}?tag=${tag}";
-    } else {
-      window.location.href = webUrl;
-    }
+    window.location.href = webUrl;
   });
 </script>
 </body>
