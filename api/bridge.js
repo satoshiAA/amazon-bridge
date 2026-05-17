@@ -1,52 +1,124 @@
+// ============================================================
+// Vercel Serverless Function - ブリッジページ
+// /api/bridge?asin=XXX&name=XXX&price=XXX&img=XXX&tag=XXX
+// ============================================================
+
 export default function handler(req, res) {
   const { asin = "", name = "Amazon商品", price = "", img = "", tag = "" } = req.query;
-  const amazonUrl = `https://www.amazon.co.jp/dp/${asin}?tag=${tag}`;
-  const title = `🟢【在庫復活】${name} | Amazon正規品`;
+
+  const amazonUrl  = `https://www.amazon.co.jp/dp/${asin}?tag=${tag}`;
+  const title      = `🟢【在庫復活】${name} | Amazon正規品`;
   const description = "Amazon.co.jp（正規）に在庫が入りました！定価販売確認済み。お早めに。";
+  const imageUrl   = img || "";
 
   const html = `<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="${title}">
-  <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${img}">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${title}">
-  <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image" content="${img}">
-  <title>${title}</title>
+
+  <!-- 即時リダイレクト（0.8秒後） -->
+  <meta http-equiv="refresh" content="0;url=${amazonUrl}">
+
+  <!-- OGP（XクローラーがスキャンしてCardを生成） -->
+  <meta property="og:type"         content="website">
+  <meta property="og:title"        content="${escHtml(title)}">
+  <meta property="og:description"  content="${escHtml(description)}">
+  <meta property="og:image"        content="${escHtml(imageUrl)}">
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:title"       content="${escHtml(title)}">
+  <meta name="twitter:description" content="${escHtml(description)}">
+  <meta name="twitter:image"       content="${escHtml(imageUrl)}">
+
+  <title>${escHtml(title)}</title>
+
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif; background: #0f1117; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+      background: #0f1117; color: #fff;
+      min-height: 100vh; display: flex;
+      align-items: center; justify-content: center;
+    }
     .container { text-align: center; padding: 40px 20px; max-width: 480px; width: 100%; }
-    .badge { display: inline-block; background: #22c55e; color: #fff; font-size: 13px; font-weight: 700; padding: 4px 14px; border-radius: 20px; margin-bottom: 16px; }
-    .product-image { width: 80vw; max-width: 360px; height: 80vw; max-height: 360px; object-fit: contain; border-radius: 12px; background: #1e2130; padding: 16px; margin: 0 auto 20px; display: block; }
+    .badge {
+      display: inline-block; background: #22c55e; color: #fff;
+      font-size: 13px; font-weight: 700; padding: 4px 14px;
+      border-radius: 20px; margin-bottom: 16px;
+    }
+    .product-image {
+      width: 80vw; max-width: 360px; height: 80vw; max-height: 360px;
+      object-fit: contain; border-radius: 12px; background: #1e2130; padding: 16px;
+      margin: 0 auto 20px; display: block;
+    }
     .product-name { font-size: 18px; font-weight: 700; line-height: 1.5; margin-bottom: 10px; }
     .price { font-size: 28px; font-weight: 800; color: #f97316; margin-bottom: 6px; }
     .seller { font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
     .seller span { color: #22c55e; font-weight: 600; }
-    .btn { display: inline-block; background: #f97316; color: #fff; font-size: 18px; font-weight: 700; padding: 16px 36px; border-radius: 8px; text-decoration: none; width: 100%; max-width: 360px; }
+    .redirect-msg { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+    .btn {
+      display: inline-block; background: #f97316; color: #fff;
+      font-size: 18px; font-weight: 700; padding: 16px 36px;
+      border-radius: 8px; text-decoration: none;
+      width: 100%; max-width: 360px;
+    }
     .warning { font-size: 11px; color: #475569; margin-top: 16px; }
   </style>
 </head>
 <body>
 <div class="container">
   <div class="badge">🟢 Amazon正規在庫 確認済み</div>
-  <img class="product-image" src="${img}" alt="${name}" onerror="this.style.display='none'">
-  <div class="product-name">${name}</div>
-  <div class="price">${price}</div>
+  <img class="product-image" src="${escHtml(imageUrl)}" alt="${escHtml(name)}" onerror="this.style.display='none'">
+  <div class="product-name">${escHtml(name)}</div>
+  <div class="price">${escHtml(price)}</div>
   <div class="seller">販売元：<span>Amazon.co.jp（正規）</span></div>
-  <a class="btn" href="${amazonUrl}">今すぐAmazonで購入 →</a>
-  <div class="warning">※ 在庫は予告なく終了する場合があります。<br>※ このページはアフィリエイトリンクを含みます。</div>
+  <div class="redirect-msg">Amazonへ移動しています...</div>
+  <a class="btn" href="${amazonUrl}" id="buyBtn">今すぐAmazonで購入 →</a>
+  <div class="warning">
+    ※ 在庫は予告なく終了する場合があります。<br>
+    ※ このページはアフィリエイトリンクを含みます。
+  </div>
 </div>
-<script>setTimeout(function(){ window.location.href = "${amazonUrl}"; }, 800);</script>
+<script>
+  var webUrl     = "${amazonUrl}";
+  var iosUrl     = "com.amazon.mobile.shopping.web://www.amazon.co.jp/dp/${asin}?tag=${tag}";
+  var androidUrl = "intent://www.amazon.co.jp/dp/${asin}?tag=${tag}#Intent;scheme=https;package=com.amazon.mShop.android.shopping;end";
+  var ua         = navigator.userAgent.toLowerCase();
+  var isIOS      = /iphone|ipad|ipod/.test(ua);
+  var isAndroid  = /android/.test(ua);
+
+  function openApp() {
+    if (isIOS) {
+      window.location.href = iosUrl;
+      setTimeout(function() { window.location.href = webUrl; }, 800);
+    } else if (isAndroid) {
+      window.location.href = androidUrl;
+      setTimeout(function() { window.location.href = webUrl; }, 800);
+    } else {
+      window.location.href = webUrl;
+    }
+  }
+
+  setTimeout(openApp, 500);
+
+  document.getElementById('buyBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    openApp();
+  });
+</script>
 </body>
 </html>`;
 
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
   res.status(200).send(html);
+}
+
+function escHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
