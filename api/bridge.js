@@ -74,7 +74,6 @@ export default function handler(req, res) {
   <div class="price">${escHtml(price)}</div>
   <div class="seller">販売元：<span>Amazon.co.jp（正規）</span></div>
   <div class="redirect-msg">Amazonへ移動しています...</div>
-  <!-- amzn://スキームでAmazonアプリを直接起動 -->
   <a class="btn btn-app" href="amzn://dp/${asin}?tag=${tag}" id="appBtn">
     📱 Amazonアプリで開く
   </a>
