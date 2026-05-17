@@ -17,9 +17,6 @@ export default function handler(req, res) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- 即時リダイレクト（0.8秒後） -->
-  <meta http-equiv="refresh" content="0;url=${amazonUrl}">
-
   <!-- OGP（XクローラーがスキャンしてCardを生成） -->
   <meta property="og:type"         content="website">
   <meta property="og:title"        content="${escHtml(title)}">
