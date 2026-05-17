@@ -81,7 +81,7 @@ export default function handler(req, res) {
 </div>
 <script>
   var webUrl     = "${amazonUrl}";
-  var iosUrl     = "com.amazon.mobile.shopping.web://www.amazon.co.jp/dp/${asin}?tag=${tag}";
+  var iosUrl     = "https://www.amazon.co.jp/dp/${asin}?tag=${tag}";
   var androidUrl = "intent://www.amazon.co.jp/dp/${asin}?tag=${tag}#Intent;scheme=https;package=com.amazon.mShop.android.shopping;end";
   var ua         = navigator.userAgent.toLowerCase();
   var isIOS      = /iphone|ipad|ipod/.test(ua);
@@ -89,11 +89,19 @@ export default function handler(req, res) {
 
   function openApp() {
     if (isIOS) {
+      // iOSはUniversal Links経由が最も確実
+      // amazon.co.jpのUniversal Linksはそのままアプリで開く
+      var start = Date.now();
       window.location.href = iosUrl;
-      setTimeout(function() { window.location.href = webUrl; }, 800);
+      // フォールバック：アプリが開かなかった場合にウェブへ
+      setTimeout(function() {
+        if (Date.now() - start < 2000) {
+          window.location.href = webUrl;
+        }
+      }, 1500);
     } else if (isAndroid) {
       window.location.href = androidUrl;
-      setTimeout(function() { window.location.href = webUrl; }, 800);
+      setTimeout(function() { window.location.href = webUrl; }, 1500);
     } else {
       window.location.href = webUrl;
     }
