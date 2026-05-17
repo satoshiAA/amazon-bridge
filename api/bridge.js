@@ -63,12 +63,9 @@ export default function handler(req, res) {
   <div class="price">${escHtml(price)}</div>
   <div class="seller">販売元：<span>Amazon.co.jp（正規）</span></div>
 
-  <!-- JSなし・hrefのみ・target不使用 -->
-  <a class="btn btn-app" href="${amznUrl}">
+  <!-- https://がUniversal Links経由でアプリを開く -->
+  <a class="btn btn-app" href="${amazonUrl}">
     📱 Amazonアプリで開く
-  </a>
-  <a class="btn btn-web" href="${amazonUrl}">
-    🌐 ブラウザで開く
   </a>
 
   <div class="warning">
