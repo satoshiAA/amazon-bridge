@@ -134,7 +134,7 @@ export default function handler(req, res) {
   <div class="product-name">${escHtml(name)}</div>
   <div class="price">${escHtml(price)}</div>
   <div class="seller">販売元：<span>Amazon.co.jp（正規）</span></div>
-  <a class="btn" href="${amazonUrl}">
+  <a class="btn" href="${amazonUrl}" id="buyBtn">
     📱 Amazonアプリで開く
   </a>
   <div class="warning">
@@ -151,7 +151,7 @@ export default function handler(req, res) {
       mode:   "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        type:   "ab_test",
+        type:   "ab_view",
         asin:   "${asin}",
         name:   "${escHtml(name)}",
         theme:  "${theme}",
@@ -161,6 +161,28 @@ export default function handler(req, res) {
         time:   new Date().toISOString(),
       }),
     }).catch(function() {});
+  }
+
+  // ボタンタップ時のログ送信
+  var buyBtn = document.getElementById('buyBtn');
+  if (buyBtn && logUrl) {
+    buyBtn.addEventListener('click', function() {
+      fetch(logUrl, {
+        method: "POST",
+        mode:   "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type:   "ab_tap",
+          asin:   "${asin}",
+          name:   "${escHtml(name)}",
+          theme:  "${theme}",
+          device: /iphone|ipad|ipod/i.test(navigator.userAgent) ? "iOS"
+                 : /android/i.test(navigator.userAgent) ? "Android"
+                 : "PC",
+          time:   new Date().toISOString(),
+        }),
+      }).catch(function() {});
+    });
   }
 </script>
 </body>
