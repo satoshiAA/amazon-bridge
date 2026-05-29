@@ -139,6 +139,9 @@ export default function handler(req, res) {
   </a>
   <div class="warning">
     ※ 在庫は予告なく終了する場合があります。<br>
+    ※ 人気商品は数秒で売り切れる場合があります。<br>
+    ※ 購入前に販売元が「Amazon.co.jp」であることを必ずご確認ください。<br>
+    ※ プレ値・転売品にはご注意ください。<br>
     ※ このページはアフィリエイトリンクを含みます。
   </div>
 </div>
