@@ -125,18 +125,26 @@ export default function handler(req, res) {
 <body>
 <div class="container">
   <div class="badge">🟢 Amazon正規在庫 確認済み</div>
-  <img
-    class="product-image"
-    src="${escHtml(imageUrl)}"
-    alt="${escHtml(name)}"
-    onerror="this.style.display='none'"
-  >
-  <div class="product-name">${escHtml(name)}</div>
-  <div class="price">${escHtml(price)}</div>
-  <div class="seller">販売元：<span>Amazon.co.jp（正規）</span></div>
+
+  <!-- ボタンを上部に移動 -->
   <a class="btn" href="${amazonUrl}" id="buyBtn">
     📱 Amazonアプリで開く
   </a>
+
+  <!-- 画像タップでもアプリが開く -->
+  <a href="${amazonUrl}" style="display:block;">
+    <img
+      class="product-image"
+      src="${escHtml(imageUrl)}"
+      alt="${escHtml(name)}"
+      onerror="this.style.display='none'"
+    >
+  </a>
+
+  <div class="product-name">${escHtml(name)}</div>
+  <div class="price">${escHtml(price)}</div>
+  <div class="seller">販売元：<span>Amazon.co.jp（正規）</span></div>
+
   <div class="warning">
     ※ 在庫は予告なく終了する場合があります。<br>
     ※ 人気商品は数秒で売り切れる場合があります。<br>
