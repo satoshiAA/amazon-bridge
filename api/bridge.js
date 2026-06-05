@@ -7,8 +7,18 @@ export default function handler(req, res) {
   const imageUrl  = img || "";
 
   // ランダムでテーマを決定
-  const theme     = Math.random() < 0.5 ? "dark" : "light";
-  const isDark    = theme === "dark";
+  const theme  = Math.random() < 0.5 ? "dark" : "light";
+  const isDark = theme === "dark";
+
+  // ボタン文言を5パターンからランダム選択
+  const btnMessages = [
+    "⚡ 今すぐAmazonで購入する →",
+    "🛒 在庫があるうちに購入する →",
+    "📦 Amazonで在庫を確認する →",
+    "🔥 売り切れ前にチェック →",
+    "✅ Amazon正規品を購入する →",
+  ];
+  const btnMessage = btnMessages[Math.floor(Math.random() * btnMessages.length)];
 
   // テーマ別カラー設定
   const colors = {
@@ -17,12 +27,13 @@ export default function handler(req, res) {
     subtext:    isDark ? "#94a3b8" : "#666666",
     imgBg:      isDark ? "#1e2130" : "#f5f5f5",
     badgeBg:    "#22c55e",
-    pricColor:  "#f97316",
+    priceColor: "#f97316",
     btnBg:      "#f97316",
     sellerText: isDark ? "#94a3b8" : "#666666",
     sellerSpan: "#22c55e",
     warnText:   isDark ? "#475569" : "#999999",
     border:     isDark ? "none" : "1px solid #e5e7eb",
+    urgentText: isDark ? "#fca5a5" : "#dc2626",
   };
 
   // GASのWebアプリURLにアクセスログを送信
@@ -68,6 +79,12 @@ export default function handler(req, res) {
       font-weight: 700;
       padding: 4px 14px;
       border-radius: 20px;
+      margin-bottom: 8px;
+    }
+    .urgent-msg {
+      font-size: 12px;
+      color: ${colors.urgentText};
+      font-weight: 600;
       margin-bottom: 16px;
     }
     .product-image {
@@ -93,7 +110,7 @@ export default function handler(req, res) {
     .price {
       font-size: 28px;
       font-weight: 800;
-      color: ${colors.pricColor};
+      color: ${colors.priceColor};
       margin-bottom: 6px;
     }
     .seller {
@@ -108,31 +125,47 @@ export default function handler(req, res) {
       color: #fff;
       font-size: 16px;
       font-weight: 700;
-      padding: 14px 36px;
+      padding: 16px 36px;
       border-radius: 8px;
       text-decoration: none;
       width: 100%;
       max-width: 360px;
       margin: 0 auto;
     }
+    .btn-sub {
+      font-size: 11px;
+      color: ${colors.warnText};
+      margin-top: 6px;
+      margin-bottom: 24px;
+    }
+    .divider {
+      border: none;
+      border-top: 1px solid ${isDark ? "#2d3748" : "#e5e7eb"};
+      margin: 24px auto;
+      max-width: 360px;
+    }
     .warning {
       font-size: 11px;
       color: ${colors.warnText};
       margin-top: 16px;
+      line-height: 1.8;
     }
   </style>
 </head>
 <body>
 <div class="container">
-  <div class="badge">🟢 Amazon正規在庫 確認済み</div>
 
-  <!-- ボタンを上部に移動 -->
-  <a class="btn" href="${amazonUrl}" id="buyBtn">
-    📱 Amazonアプリで開く
+  <div class="badge">🟢 Amazon正規在庫 復活中</div>
+  <div class="urgent-msg">⚠ 人気商品のため在庫が少ない可能性があります</div>
+
+  <!-- 上部ボタン -->
+  <a class="btn" href="${amazonUrl}" id="buyBtnTop">
+    ${btnMessage}
   </a>
+  <div class="btn-sub">タップするとAmazonに移動します</div>
 
   <!-- 画像タップでもアプリが開く -->
-  <a href="${amazonUrl}" style="display:block;">
+  <a href="${amazonUrl}" id="imgLink" style="display:block;">
     <img
       class="product-image"
       src="${escHtml(imageUrl)}"
@@ -145,17 +178,24 @@ export default function handler(req, res) {
   <div class="price">${escHtml(price)}</div>
   <div class="seller">販売元：<span>Amazon.co.jp（正規）</span></div>
 
+  <!-- 下部ボタン -->
+  <a class="btn" href="${amazonUrl}" id="buyBtnBottom">
+    ${btnMessage}
+  </a>
+
+  <hr class="divider">
+
   <div class="warning">
     ※ 在庫は予告なく終了する場合があります。<br>
-    ※ 人気商品は数秒で売り切れる場合があります。<br>
     ※ 購入前に販売元が「Amazon.co.jp」であることを必ずご確認ください。<br>
     ※ プレ値・転売品にはご注意ください。<br>
     ※ このページはアフィリエイトリンクを含みます。
   </div>
 </div>
 <script>
-  // GASにアクセスログを送信
   var logUrl = "${gasLogUrl}";
+
+  // アクセスログ送信
   if (logUrl) {
     fetch(logUrl, {
       method: "POST",
@@ -174,27 +214,33 @@ export default function handler(req, res) {
     }).catch(function() {});
   }
 
-  // ボタンタップ時のログ送信
-  var buyBtn = document.getElementById('buyBtn');
-  if (buyBtn && logUrl) {
-    buyBtn.addEventListener('click', function() {
-      fetch(logUrl, {
-        method: "POST",
-        mode:   "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type:   "ab_tap",
-          asin:   "${asin}",
-          name:   "${escHtml(name)}",
-          theme:  "${theme}",
-          device: /iphone|ipad|ipod/i.test(navigator.userAgent) ? "iOS"
-                 : /android/i.test(navigator.userAgent) ? "Android"
-                 : "PC",
-          time:   new Date().toISOString(),
-        }),
-      }).catch(function() {});
-    });
+  // タップログ送信（上部ボタン・下部ボタン・画像の3箇所）
+  function sendTapLog() {
+    if (!logUrl) return;
+    fetch(logUrl, {
+      method: "POST",
+      mode:   "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type:   "ab_tap",
+        asin:   "${asin}",
+        name:   "${escHtml(name)}",
+        theme:  "${theme}",
+        device: /iphone|ipad|ipod/i.test(navigator.userAgent) ? "iOS"
+               : /android/i.test(navigator.userAgent) ? "Android"
+               : "PC",
+        time:   new Date().toISOString(),
+      }),
+    }).catch(function() {});
   }
+
+  var topBtn    = document.getElementById('buyBtnTop');
+  var bottomBtn = document.getElementById('buyBtnBottom');
+  var imgLink   = document.getElementById('imgLink');
+
+  if (topBtn)    topBtn.addEventListener('click',    sendTapLog);
+  if (bottomBtn) bottomBtn.addEventListener('click', sendTapLog);
+  if (imgLink)   imgLink.addEventListener('click',   sendTapLog);
 </script>
 </body>
 </html>`;
